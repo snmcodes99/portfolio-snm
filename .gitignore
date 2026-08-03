@@ -65,7 +65,6 @@ coverage/
 .eslintcache
 .stylelintcache
 
-# ─── GitHub Pages build output (keep /snm tracked for deployment) ─────────────
-# If you build locally and push /snm, leave it unignored.
-# Uncomment the line below ONLY if you use a CI/CD pipeline to build instead:
-# snm/
+# ─── GitHub Pages build output ────────────────────────────────────────────────
+# Always ignore the snm/ build output folder so it isn't accidentally committed
+snm/
