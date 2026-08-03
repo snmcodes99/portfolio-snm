@@ -1,4 +1,5 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect } from "react";
+import gsap from "gsap";
 import HeroBackground from "./HeroBackground";
 
 export default function Hero() {
@@ -14,37 +15,62 @@ export default function Hero() {
     { indent: 0, fn: "engineer", method: ".create(", arg: '"impact"', close: ");" },
   ];
 
-  // ── Cursor-following spotlight glow ─────────────────────────────────────
-  // One RAF-throttled mousemove handler — no continuous loop.
   const heroRef = useRef(null);
   const rafId = useRef(null);
 
+  // ── Mouse spotlight + code card parallax only ─────────────────────────
   const handleMouseMove = useCallback((e) => {
-    if (rafId.current) return; // already queued
+    if (rafId.current) return;
     rafId.current = requestAnimationFrame(() => {
       rafId.current = null;
       const hero = heroRef.current;
       if (!hero) return;
+
       const rect = hero.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
+
+      // CSS-var spotlight
       hero.style.setProperty("--spot-x", `${x}px`);
       hero.style.setProperty("--spot-y", `${y}px`);
       hero.style.setProperty("--spot-op", "1");
 
-      const xNorm = (x - rect.width / 2) / (rect.width / 2);
-      const yNorm = (y - rect.height / 2) / (rect.height / 2);
-      hero.style.setProperty("--mouse-x", xNorm);
-      hero.style.setProperty("--mouse-y", yNorm);
+      // Normalised -1 → +1
+      const xN = (x / rect.width - 0.5) * 2;
+      const yN = (y / rect.height - 0.5) * 2;
+
+      // Only the code card tilts — text stays still
+      gsap.to(".code-editor-card", {
+        x: xN * 12, y: yN * 8,
+        rotationY: xN * 7, rotationX: yN * -7,
+        duration: 0.9, ease: "power2.out", overwrite: "auto",
+        transformPerspective: 1000,
+      });
     });
   }, []);
 
   const handleMouseLeave = useCallback(() => {
     if (heroRef.current) {
       heroRef.current.style.setProperty("--spot-op", "0");
-      heroRef.current.style.setProperty("--mouse-x", "0");
-      heroRef.current.style.setProperty("--mouse-y", "0");
     }
+    // Spring-reset only the code card
+    gsap.to(".code-editor-card", {
+      x: 0, y: 0, rotationY: 0, rotationX: 0,
+      duration: 1.2, ease: "elastic.out(1, 0.5)", overwrite: "auto",
+    });
+  }, []);
+
+  // ── Scroll-down indicator auto-hide ─────────────────────────────────────
+  useEffect(() => {
+    const indicator = document.querySelector(".hero-scroll-indicator");
+    if (!indicator) return;
+    const onScroll = () => {
+      const scrolled = window.scrollY > 80;
+      indicator.style.opacity = scrolled ? "0" : "1";
+      indicator.style.pointerEvents = scrolled ? "none" : "auto";
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
@@ -57,7 +83,7 @@ export default function Hero() {
     >
       <HeroBackground />
 
-      {/* Spotlight overlay — pure CSS, driven by CSS custom props */}
+      {/* Spotlight overlay */}
       <div className="hero-spotlight" aria-hidden="true" />
 
       <div className="hero-wrapper">
@@ -163,6 +189,16 @@ export default function Hero() {
           </div>
         </div>
       </div>
+
+      {/* Scroll-down indicator */}
+      <a href="#about" className="hero-scroll-indicator" aria-label="Scroll down">
+        <span className="scroll-arrow-label">Scroll</span>
+        <div className="scroll-arrow-wrap">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 3v14M3 10l7 7 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+      </a>
     </section>
   );
 }

@@ -50,7 +50,8 @@
 }
 
 html {
-    scroll-behavior: smooth;
+    /* Lenis handles smooth scrolling — native smooth-behavior would fight it */
+    scroll-behavior: auto;
 }
 
 body {
@@ -60,6 +61,179 @@ body {
     line-height: 1.6;
     overflow-x: hidden;
     position: relative;
+    /* Hide native cursor when custom cursor is active (desktop only) */
+    cursor: none;
+}
+
+/* Restore cursor on touch devices */
+@media (pointer: coarse) {
+    body {
+        cursor: auto;
+    }
+}
+
+/* ===================================
+   CURSOR — Glowing Star / Sun
+   =================================== */
+
+/* Layer 1: Bloom glow */
+.cur-glow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 99990;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    will-change: transform;
+    filter: blur(28px);
+    background: radial-gradient(circle, rgba(0, 231, 255, 0.12) 0%, transparent 65%);
+}
+
+/* Layer 2: Star SVG wrapper (GSAP moves) */
+.cur-star-wrap {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 99996;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    will-change: transform;
+    --cur-clr: #00e7ff;
+    --cur-mid: rgba(0, 231, 255, 0.5);
+}
+
+/* Star SVG — slow spin */
+.cur-star-svg {
+    width: 38px;
+    height: 38px;
+    display: block;
+    animation: curStarSpin 12s linear infinite;
+    transform-origin: center;
+    overflow: visible;
+    filter: drop-shadow(0 0 3px var(--cur-mid, rgba(0,231,255,0.5)))
+            drop-shadow(0 0 8px rgba(0, 231, 255, 0.2));
+}
+
+@keyframes curStarSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* Layer 3: Snappy dot */
+.cur-dot {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #00e7ff;
+    pointer-events: none;
+    z-index: 100000;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    will-change: transform;
+    box-shadow: 0 0 5px #00e7ff, 0 0 12px rgba(0, 231, 255, 0.6);
+}
+
+/* ── Mobile touch ripple ──────────────────────────── */
+.touch-ripple {
+    position: fixed;
+    pointer-events: none;
+    z-index: 99999;
+    border-radius: 50%;
+    will-change: transform, opacity;
+}
+
+/* Restore native cursor on touch devices */
+@media (pointer: coarse) {
+    body { cursor: auto !important; }
+}
+
+/* ===================================
+   SCROLL PROGRESS BAR
+   =================================== */
+.scroll-progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-cyan), #8b5cf6, var(--color-red));
+    transform-origin: left;
+    transform: scaleX(0);
+    z-index: 9999;
+    pointer-events: none;
+    box-shadow: 0 0 12px rgba(0, 231, 255, 0.6), 0 0 24px rgba(0, 231, 255, 0.2);
+}
+
+/* ===================================
+   HERO SCROLL INDICATOR
+   =================================== */
+
+.hero-scroll-indicator {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    z-index: 20;
+    transition: opacity 0.5s ease, color 0.3s ease;
+    cursor: none;
+}
+
+.hero-scroll-indicator:hover {
+    color: var(--color-cyan);
+}
+
+.scroll-arrow-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+
+.scroll-arrow-wrap {
+    animation: scrollBounce 1.8s ease-in-out infinite;
+}
+
+@keyframes scrollBounce {
+    0%, 100% { transform: translateY(0); opacity: 0.6; }
+    50% { transform: translateY(6px); opacity: 1; }
+}
+
+/* ===================================
+   HERO PARALLAX — transform-style
+   =================================== */
+.hero-left > * {
+    will-change: transform;
+}
+
+.hero-right .code-editor-card {
+    will-change: transform;
+    transform-style: preserve-3d;
+}
+
+/* CSS Containment — tells browser sections are independent paint regions.
+   Offscreen sections are skipped entirely during scroll repaints. */
+.about-section,
+.skills-section,
+.projects-section,
+.education-section,
+.achievements-section,
+.contact-section {
+    contain: layout paint;
 }
 
 a {
@@ -102,15 +276,10 @@ a {
     opacity: 0;
 }
 
-/* GPU-acceleration hints for animated elements */
-.section-title,
-.about-profile-wrap,
-.about-content-col,
+/* GPU-acceleration hints — only for elements that GSAP actually animates */
 .project-card,
 .edu-card,
-.ach-card,
-.connect-card,
-.skill-hex-card {
+.ach-card {
     will-change: transform, opacity;
 }
 
@@ -464,41 +633,32 @@ a {
 .aurora-blob {
     position: absolute;
     border-radius: 50%;
-    filter: blur(60px);
-    /* was 80px — ~20% cheaper GPU filter pass */
-    opacity: 0.12;
-    /* Compositor-thread animation — replaces GSAP infinite tweens */
-    will-change: transform;
+    filter: blur(40px);
+    opacity: 0.1;
+    will-change: auto;
 }
 
 .aurora-blob-1 {
-    width: 700px;
-    height: 700px;
+    width: 500px;
+    height: 500px;
     background: radial-gradient(circle, var(--color-cyan), transparent 70%);
-    top: -250px;
-    left: -250px;
-    animation: auroraMove1 8s ease-in-out infinite alternate;
+    top: -200px;
+    left: -200px;
+    animation: none;
 }
 
 .aurora-blob-2 {
-    width: 750px;
-    height: 750px;
-    /* was 900px — trimmed 17% surface area */
+    width: 500px;
+    height: 500px;
     background: radial-gradient(circle, var(--color-red), transparent 70%);
-    bottom: -350px;
-    right: -350px;
-    opacity: 0.08;
-    animation: auroraMove2 12s ease-in-out infinite alternate;
+    bottom: -250px;
+    right: -250px;
+    opacity: 0.06;
+    animation: none;
 }
 
 .aurora-blob-3 {
-    width: 600px;
-    height: 600px;
-    background: radial-gradient(circle, var(--color-cyan), transparent 70%);
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    animation: auroraMove3 10s ease-in-out infinite alternate;
+    display: none;
 }
 
 /* Keyframes match former GSAP values exactly (x/y/scale targets) */
@@ -569,10 +729,11 @@ a {
     left: 0;
     width: 100%;
     z-index: 1000;
-    backdrop-filter: blur(16px) saturate(160%);
-    background: rgba(8, 12, 24, 0.75);
+    backdrop-filter: blur(8px);
+    background: rgba(8, 12, 24, 0.88);
     border-bottom: 1px solid var(--color-glass-border);
     transition: background 0.3s;
+    contain: layout;
 }
 
 .nav-container {
@@ -702,8 +863,7 @@ a {
 }
 
 .glass-card {
-    backdrop-filter: blur(16px) saturate(140%);
-    background: rgba(14, 20, 40, 0.6);
+    background: rgba(14, 20, 40, 0.88);
     border: 1px solid var(--color-glass-border);
     border-radius: 20px;
     padding: var(--card-padding);
@@ -792,6 +952,8 @@ a {
     grid-template-columns: 1fr 1fr;
     gap: 80px;
     align-items: center;
+    position: relative;
+    z-index: 5;
 }
 
 /* Left */
@@ -979,18 +1141,14 @@ a {
     max-width: 560px;
     border-radius: 16px;
     overflow: hidden;
-    background: rgba(10, 14, 26, 0.92);
+    background: rgba(10, 14, 26, 0.97);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow:
         0 30px 80px rgba(0, 0, 0, 0.6),
         0 0 0 1px rgba(0, 231, 255, 0.05),
         inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(24px);
     position: relative;
     z-index: 2;
-    will-change: transform;
-    /* promotes to own layer — neighbours don't repaint */
-    animation: editorFloat 6s ease-in-out infinite;
 }
 
 @keyframes editorFloat {
@@ -1306,10 +1464,9 @@ a {
     font-weight: 700;
     color: #fff;
     white-space: nowrap;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 231, 255, 0.2);
+    background: rgba(8, 14, 32, 0.92);
     z-index: 10;
     /* Keep it above the HUD ring */
-    backdrop-filter: blur(8px);
 }
 
 .about-profile-tag-dot {
@@ -1414,42 +1571,23 @@ a {
     width: 300px;
     height: 300px;
     border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.15;
+    filter: blur(40px);
+    opacity: 0.12;
     z-index: 0;
     pointer-events: none;
-    animation: skillOrbFloat 10s ease-in-out infinite alternate;
+    will-change: auto;
 }
 
 .orb-cyan {
     background: radial-gradient(circle, var(--color-cyan), transparent 60%);
     top: 10%;
     left: 20%;
-    animation-delay: -2s;
 }
 
 .orb-red {
     background: radial-gradient(circle, var(--color-red), transparent 60%);
     bottom: 10%;
     right: 20%;
-    animation-duration: 12s;
-    animation-direction: alternate-reverse;
-}
-
-@keyframes skillOrbFloat {
-    0% {
-        transform: translate(0, 0) scale(1);
-        opacity: 0.1;
-    }
-
-    50% {
-        opacity: 0.25;
-    }
-
-    100% {
-        transform: translate(50px, -40px) scale(1.2);
-        opacity: 0.15;
-    }
 }
 
 .skill-hex-card {
@@ -1801,7 +1939,7 @@ a {
     padding: var(--card-padding);
     border-radius: 16px;
     position: relative;
-    backdrop-filter: blur(14px);
+    background: rgba(14, 20, 40, 0.92);
     transition: var(--trans-base);
     overflow: hidden;
 }
@@ -2320,7 +2458,6 @@ a {
     justify-content: center;
     cursor: pointer;
     border: 1px solid;
-    backdrop-filter: blur(16px);
     transition: var(--trans-base);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
 }
@@ -3563,14 +3700,7 @@ a {
     overflow: hidden;
 }
 
-/* ── SVG pattern layer ─────────────────────────── */
-.section-svg-pattern {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0.8;
-}
+
 
 /* ── Section gradient shades ───────────────────── */
 .section-shade {
@@ -3579,45 +3709,31 @@ a {
 }
 
 .about-shade {
-    background:
-        radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0, 231, 255, 0.06), transparent 40%) fixed,
-        linear-gradient(160deg, rgba(0, 231, 255, 0.04) 0%, transparent 40%, rgba(255, 59, 59, 0.03) 100%);
+    background: linear-gradient(160deg, rgba(0, 231, 255, 0.04) 0%, transparent 40%, rgba(255, 59, 59, 0.03) 100%);
 }
 
 .skills-shade {
-    background:
-        radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 59, 59, 0.06), transparent 40%) fixed,
-        linear-gradient(180deg, rgba(8, 12, 24, 0) 0%, rgba(0, 50, 80, 0.12) 50%, rgba(8, 12, 24, 0) 100%);
+    background: linear-gradient(180deg, rgba(8, 12, 24, 0) 0%, rgba(0, 50, 80, 0.12) 50%, rgba(8, 12, 24, 0) 100%);
 }
 
 .projects-shade {
-    background:
-        radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(168, 85, 247, 0.06), transparent 40%) fixed,
-        linear-gradient(200deg, rgba(255, 59, 59, 0.04) 0%, transparent 40%, rgba(0, 231, 255, 0.03) 100%);
+    background: linear-gradient(200deg, rgba(255, 59, 59, 0.04) 0%, transparent 40%, rgba(0, 231, 255, 0.03) 100%);
 }
 
 .education-shade {
-    background:
-        radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0, 255, 150, 0.05), transparent 40%) fixed,
-        linear-gradient(145deg, rgba(0, 231, 255, 0.03) 0%, transparent 40%, rgba(0, 50, 80, 0.05) 100%);
+    background: linear-gradient(145deg, rgba(0, 231, 255, 0.03) 0%, transparent 40%, rgba(0, 50, 80, 0.05) 100%);
 }
 
 .achievements-shade {
-    background:
-        radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 215, 0, 0.05), transparent 40%) fixed,
-        linear-gradient(135deg, rgba(0, 231, 255, 0.03) 0%, transparent 50%, rgba(255, 59, 59, 0.04) 100%);
+    background: linear-gradient(135deg, rgba(0, 231, 255, 0.03) 0%, transparent 50%, rgba(255, 59, 59, 0.04) 100%);
 }
 
 .contact-shade {
-    background:
-        radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 0, 128, 0.07), transparent 40%) fixed,
-        radial-gradient(ellipse at center, rgba(0, 231, 255, 0.06) 0%, transparent 60%);
+    background: radial-gradient(ellipse at center, rgba(0, 231, 255, 0.06) 0%, transparent 60%);
 }
 
 .hero-shade {
-    background:
-        radial-gradient(1000px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0, 231, 255, 0.1), transparent 50%) fixed,
-        linear-gradient(180deg, rgba(8, 12, 24, 0) 0%, rgba(0, 231, 255, 0.05) 50%, rgba(8, 12, 24, 0) 100%);
+    background: linear-gradient(180deg, rgba(8, 12, 24, 0) 0%, rgba(0, 231, 255, 0.05) 50%, rgba(8, 12, 24, 0) 100%);
 }
 
 .tech-scanner-horizontal {
@@ -3698,22 +3814,15 @@ a {
             transparent 100%);
 }
 
-/* ── About dot mesh ────────────────────────────── */
-.about-mesh-pattern {
-    position: absolute;
-    inset: 0;
-    background-image: radial-gradient(rgba(0, 231, 255, 0.08) 1px, transparent 1px);
-    background-size: 30px 30px;
-    mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
-    -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
-}
+
 
 /* ── Ambient gradient orbs ─────────────────────── */
 .bg-gradient-orb {
     position: absolute;
     border-radius: 50%;
-    filter: blur(80px);
+    filter: blur(40px);
     pointer-events: none;
+    will-change: auto;
 }
 
 /* Size variants */
@@ -3772,13 +3881,7 @@ a {
         filter: blur(80px);
     }
 
-    .about-mesh-pattern {
-        background-size: 35px 35px;
-    }
 
-    .section-svg-pattern {
-        opacity: 0.5;
-    }
 
     .about-shade,
     .skills-shade,
@@ -3814,7 +3917,4 @@ a {
         height: 250px;
     }
 
-    .section-svg-pattern {
-        opacity: 0.35;
-    }
 }

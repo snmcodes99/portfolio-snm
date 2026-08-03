@@ -1,8 +1,7 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
-
 
 import FluidBackground from "./components/FluidBackground";
 import Navbar from "./components/Navbar";
@@ -17,6 +16,8 @@ import Footer from "./components/Footer";
 import Loader from "./components/Loader";
 import ProjectModal from "./components/ProjectModal";
 import FloatingButtons from "./components/FloatingButtons";
+import StarCursor from "./components/CustomCursor";
+import ScrollProgress from "./components/ScrollProgress";
 
 // Pre-resolve the hashed URL so we can preload during the loader phase
 import profileSrc from "./assets/img/profile.jpg";
@@ -32,7 +33,6 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   // Preload the profile image while the loader is showing
-  // so it's already decoded when About scrolls into view
   useEffect(() => {
     const img = new Image();
     img.src = profileSrc;
@@ -40,53 +40,39 @@ export default function App() {
 
   useEffect(() => {
     if (!loading) {
-      // Initialize Lenis for buttery smooth scrolling
+      // ── Lenis: buttery-smooth scroll ──────────────────────────────
       const lenis = new Lenis({
-        duration: 1.2,
+        duration: 1.4,
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        lerp: 0.075,           // lower = silkier deceleration
+        wheelMultiplier: 0.85, // slightly slower wheel = more premium feel
+        touchMultiplier: 1.8,  // faster touch response on mobile
+        smoothWheel: true,
+        infinite: false,
       });
 
       // Sync Lenis with GSAP ScrollTrigger
-      lenis.on('scroll', ScrollTrigger.update);
+      lenis.on("scroll", ScrollTrigger.update);
       gsap.ticker.add((time) => {
         lenis.raf(time * 1000);
       });
       gsap.ticker.lagSmoothing(0);
 
-      // Wait one animation frame for the full page layout to paint,
-      // then init animations. This prevents the "laggy first scroll"
-      // caused by GSAP measuring stale scroll positions.
       const raf = requestAnimationFrame(() => {
         initHeroAnimations();
         initScrollAnimations();
         initMagneticButtons();
-
-        // Second refresh after a tick to catch any async image/font loads
         setTimeout(() => ScrollTrigger.refresh(), 200);
       });
-
-      // Track mouse position globally for dynamic section background spotlights
-      let mouseRafId = null;
-      const handleGlobalMouseMove = (e) => {
-        if (mouseRafId) return;
-        mouseRafId = requestAnimationFrame(() => {
-          document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
-          document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
-          mouseRafId = null;
-        });
-      };
-      window.addEventListener('mousemove', handleGlobalMouseMove, { passive: true });
 
       return () => {
         cancelAnimationFrame(raf);
         cleanupAnimations();
         lenis.destroy();
         gsap.ticker.remove(lenis.raf);
-        window.removeEventListener('mousemove', handleGlobalMouseMove);
       };
     }
   }, [loading]);
-
 
   return (
     <>
@@ -94,6 +80,10 @@ export default function App() {
 
       {!loading && (
         <>
+          {/* Global overlays — above everything */}
+          <StarCursor />
+          <ScrollProgress />
+
           <FluidBackground />
           <Navbar />
           <Hero />

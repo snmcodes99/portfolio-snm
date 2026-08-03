@@ -33,28 +33,28 @@ export default function FluidBackground() {
         TRIGGER: "hover",
         IMMEDIATE: true,
         AUTO: false,
-        SIM_RESOLUTION: 128, // Optimized for performance
-        DYE_RESOLUTION: 512, // Reduced to prevent lag
-        CAPTURE_RESOLUTION: 256,
-        DENSITY_DISSIPATION: 3.0,
+        SIM_RESOLUTION: 128,
+        DYE_RESOLUTION: 512,
+        CAPTURE_RESOLUTION: 512,
+        DENSITY_DISSIPATION: 3.0, // Fades quickly enough to not block text
         VELOCITY_DISSIPATION: 0.8, 
         PRESSURE: 0.8,
-        PRESSURE_ITERATIONS: 12, // Reduced for performance
-        CURL: 20,
-        SPLAT_RADIUS: 0.12,
+        PRESSURE_ITERATIONS: 20,
+        CURL: 20, // Reduced slightly so it flows more evenly
+        SPLAT_RADIUS: 0.12, // Slightly thinner
         SPLAT_FORCE: 3000,
         SHADING: true,
         COLORFUL: true, 
         PAUSED: false,
         BACK_COLOR: { r: 8, g: 12, b: 24 },
         TRANSPARENT: false,
-        BLOOM: true,
-        BLOOM_ITERATIONS: 4, // Reduced for performance
-        BLOOM_RESOLUTION: 128, // Reduced for performance
-        BLOOM_INTENSITY: 0.1,
-        BLOOM_THRESHOLD: 0.8,
+        BLOOM: true, // Enable bloom to create bright cores and darker edges (shades of the color)
+        BLOOM_ITERATIONS: 8,
+        BLOOM_RESOLUTION: 256,
+        BLOOM_INTENSITY: 0.1, // Reduced glow intensity
+        BLOOM_THRESHOLD: 0.8, // Only glow in the most intense areas
         BLOOM_SOFT_KNEE: 0.7,
-        SUNRAYS: false,
+        SUNRAYS: false, // Disable sunrays to prevent any extra glare
         SUNRAYS_RESOLUTION: 196,
         SUNRAYS_WEIGHT: 1.0,
       });
@@ -101,14 +101,17 @@ export default function FluidBackground() {
     <div
       ref={containerRef}
       style={{
-        position: "fixed",
+        position: "absolute",
         top: 0,
         left: 0,
         width: "100%",
-        height: "100%",
+        height: "100vh",
         zIndex: 0,
         pointerEvents: "none",
-        overflow: "hidden"
+        overflow: "hidden",
+        contain: "strict",
+        transform: "translateZ(0)",
+        isolation: "isolate",
       }}
     />
   );

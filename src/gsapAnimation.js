@@ -78,9 +78,6 @@ export function initHeroAnimations() {
   return () => clearTimeout(typingTimer);
 }
 
-// Aurora blobs are now animated entirely via CSS @keyframes (see index.css).
-// Pure compositor-thread animation — zero JS overhead, no GSAP ticks.
-export function initAuroraAnimations() { /* no-op — handled by CSS */ }
 
 export function initScrollAnimations() {
   ctx = gsap.context(() => {

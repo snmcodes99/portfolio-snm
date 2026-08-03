@@ -30,7 +30,7 @@ export default function Contact() {
             </a>
 
             {/* Resume */}
-            <a href="/resume.pdf" target="_blank" rel="noreferrer" className="connect-card connect-card-red">
+            <a href="https://drive.google.com/file/d/1vnp7aixLGSdJ2QUbTEdhOYzHP9ODEcjq/view?usp=sharing" target="_blank" rel="noreferrer" className="connect-card connect-card-red">
               <div className="connect-card-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="24" height="24">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
